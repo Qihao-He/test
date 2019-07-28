@@ -14,25 +14,33 @@
 <script type="text/babel">
     // ES6 / React / JSX code from here
 
+
     class TodoItem extends React.Component {
         constructor(props) {
             super(props);
-            this.state = { done: false };
-            this.onClick = this.onClick.bind(this);
+            this.state = { isDone: false };
+            this.handleToggle = this.handleToggle.bind(this);
+            this.handleDelete = this.handleDelete.bind(this);
         }
-        onClick() {
-            this.setState(prevState => ({ done: !prevState.done }));
+
+        handleToggle() {
+            this.setState((prevState) => {
+                return { isDone: !prevState.isDone };
+            });
         }
+
+        handleDelete() {
+            this.props.handleDeleteTodo(this.props.index);
+        }
+
         render() {
-            const textStyle = { 'textDecoration': this.state.done ? 'line-through' : 'none' };
+            const { isDone } = this.state;
+            const textStyle = { textDecoration: isDone ? 'line-through' : 'none' };
             return (
                 <div>
-                    <button className="done-btn" onClick={this.onClick}>
-                        {this.state.done ? 'Undo' : 'Done'}
-                    </button>
-                    <span className="todo-label" style={textStyle}>
-        Hello World!
-     </span>
+                    <button onClick={this.handleToggle}>{isDone ? 'Undo' : 'Done'}</button>
+                    <span style={textStyle}>{this.props.text}</span>
+                    <button onClick={this.handleDelete}>x</button>
                 </div>
             );
         }
@@ -41,12 +49,89 @@
     function TodoList(props) {
         return (
             <div>
-                
+                {props.todos.map((item, index) =>
+                    <TodoItem
+                        text={item.text}
+                        key={item.id}
+                        index={index}
+                        handleDeleteTodo={props.handleDeleteTodo}
+                    />
+                )}
             </div>
         );
     }
 
-    ReactDOM.render(<TodoItem />, document.getElementById('root'));
+    class UserInput extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = { userInput: '' };
+            this.handleInputChange = this.handleInputChange.bind(this);
+            this.handleAdd = this.handleAdd.bind(this);
+        }
+
+        handleInputChange(e) {
+            console.log(e.target.value);
+            this.setState({ userInput: e.target.value });
+        }
+
+        handleAdd() {
+            const { userInput } = this.state;
+            if (userInput) {
+                this.props.handleAddTodo(userInput);
+                this.setState({ userInput: '' });
+            }
+        }
+
+        render() {
+            return (
+                <div>
+                    <input onChange={this.handleInputChange} value={this.state.userInput}/>
+                    <button onClick={this.handleAdd}>Add</button>
+                </div>
+            );
+        }
+    }
+
+    class App extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                todos: [{ id: 1, text: 'task 1' }, { id: 2, text: 'task 2' }, { id: 3, text: 'task 3' }],
+            };
+            this.handleAddTodo = this.handleAddTodo.bind(this);
+            this.handleDeleteTodo = this.handleDeleteTodo.bind(this);
+        }
+
+        handleAddTodo(text) {
+            this.setState((prevState) => {
+                return {
+                    todos: [...prevState.todos, { id: new Date().getTime(), text }]
+                };
+            });
+        }
+
+        handleDeleteTodo(index) {
+            console.log(`delete`, index);
+            this.setState((prevState) => {
+                return {
+                    todos: [...prevState.todos.slice(0, index), ...prevState.todos.slice(index + 1, prevState.todos.length)],
+                };
+            });
+        }
+
+        render() {
+            return (
+                <div>
+                    <TodoList todos={this.state.todos} handleDeleteTodo={this.handleDeleteTodo}/>
+                    <UserInput handleAddTodo={this.handleAddTodo}/>
+                </div>
+            );
+        }
+    }
+    ReactDOM.render(<App/>, document.getElementById('root'));
+
+
+
 
 </script>
 </body>
